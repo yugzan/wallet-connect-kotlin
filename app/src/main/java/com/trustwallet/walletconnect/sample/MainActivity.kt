@@ -1,6 +1,10 @@
 package com.trustwallet.walletconnect.sample
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.result.ActivityResultCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.GsonBuilder
@@ -19,8 +23,18 @@ import com.trustwallet.walletconnect.models.session.WCSession
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.view.*
 import okhttp3.OkHttpClient
-import wallet.core.jni.CoinType
-import wallet.core.jni.PrivateKey
+import com.journeyapps.barcodescanner.ScanContract
+
+import com.journeyapps.barcodescanner.ScanOptions
+
+import androidx.activity.result.ActivityResultLauncher
+import com.google.zxing.client.android.Intents
+import com.journeyapps.barcodescanner.ScanIntentResult
+import org.web3j.protocol.Web3j
+
+
+//import wallet.core.jni.CoinType
+//import wallet.core.jni.PrivateKey
 
 class MainActivity : AppCompatActivity() {
 
@@ -28,9 +42,10 @@ class MainActivity : AppCompatActivity() {
         WCClient(GsonBuilder(), OkHttpClient())
     }
 
-    val privateKey = PrivateKey("ba005cd605d8a02e3d5dfd04234cef3a3ee4f76bfbad2722d1fb5af8e12e6764".decodeHex())
-    val address = CoinType.ETHEREUM.deriveAddress(privateKey)
-
+//    val privateKey = PrivateKey("ba005cd605d8a02e3d5dfd04234cef3a3ee4f76bfbad2722d1fb5af8e12e6764".decodeHex())
+//    val address = CoinType.ETHEREUM.deriveAddress(privateKey)
+    val privateKey="";
+    val address="0x87c309b999b9c15db773fcf371539537b130791e";
     private val peerMeta = WCPeerMeta(name = "Example", url = "https://example.com")
 
     private lateinit var wcSession: WCSession
@@ -66,6 +81,41 @@ class MainActivity : AppCompatActivity() {
             connectButton.setOnClickListener {
                 connect(uriInput.editText?.text?.toString() ?: return@setOnClickListener)
             }
+            scanButton.setOnClickListener {
+                barcodeLauncher.launch(ScanOptions())
+            }
+        }
+    }
+    private val barcodeLauncher = registerForActivityResult(
+        ScanContract()
+    ) { result: ScanIntentResult ->
+        if (result.contents == null) {
+            val originalIntent: Intent? = result.originalIntent
+            if (originalIntent == null) {
+                Log.d("MainActivity", "Cancelled scan")
+                Toast.makeText(this@MainActivity, "Cancelled", Toast.LENGTH_LONG).show()
+            } else if (originalIntent.hasExtra(Intents.Scan.MISSING_CAMERA_PERMISSION)) {
+                Log.d(
+                    "MainActivity",
+                    "Cancelled scan due to missing camera permission"
+                )
+                Toast.makeText(
+                    this@MainActivity,
+                    "Cancelled due to missing camera permission",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        } else {
+            Log.d("MainActivity", "Scanned")
+            val url = result.contents
+
+            uriInput.editText?.setText(url)
+//            processWCURL(url)
+            Toast.makeText(
+                this@MainActivity,
+                "Scanned: " + result.contents,
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -137,7 +187,17 @@ class MainActivity : AppCompatActivity() {
                 .setTitle(message.type.name)
                 .setMessage(message.data)
                 .setPositiveButton("Sign") { _, _ ->
-                    wcClient.approveRequest(id, privateKey.sign(message.data.decodeHex(), CoinType.ETHEREUM.curve()))
+                    Log.e("Sign:", message.raw.toString());
+                    Log.e("Sign:", message.data);
+                    Log.e("Sign:", message.data.decodeHex().toString());
+                    val message = "\\x19Ethereum Signed Message:\n${message.data.length}"
+
+                    Log.e("Sign:", message);
+                    val web3j = Web3j.build();
+//                    web3j.si
+                    //"\u0019Ethereum Signed Message:\n"
+//                    val data: ByteArray = ArrayUtils.addAll(message.toByteArray(), messageData)
+//                    wcClient.approveRequest(id, privateKey.sign(message.data.decodeHex(), CoinType.ETHEREUM.curve()))
                 }
                 .setNegativeButton("Cancel") { _, _ ->
                     rejectRequest(id)
@@ -176,8 +236,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        init {
-            System.loadLibrary("TrustWalletCore")
-        }
+//        init {
+//            System.loadLibrary("TrustWalletCore")
+//        }
     }
 }

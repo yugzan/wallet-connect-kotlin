@@ -39,5 +39,12 @@ dependencies {
     implementation "com.google.code.gson:gson:2.8.8"
 
     implementation "com.github.TrustWallet:wallet-connect-kotlin:1.5.4"
-    implementation "com.trustwallet:wallet-core:2.6.33"
+    //implementation "com.trustwallet:wallet-core:2.6.33"
+
+    // Bar code scanning
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    implementation 'com.google.zxing:core:3.4.1'
+
+    implementation 'org.web3j:core:5.0.0'
+
 }
